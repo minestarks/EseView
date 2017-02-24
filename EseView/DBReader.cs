@@ -37,18 +37,17 @@ namespace EseView
             int pageSize;
             Esent.JetGetDatabaseFileInfo(m_filename, out pageSize, JET_DbInfo.PageSize);
 
-            string dir = Path.GetDirectoryName(m_filename) + Path.DirectorySeparatorChar;
             Esent.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, JET_param.DatabasePageSize, pageSize, null);
-            Esent.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, JET_param.LogFilePath, 0, dir);
-            Esent.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, JET_param.SystemPath, 0, dir);
-
-            // Put the temp DB in our working directory.
-            Esent.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, JET_param.TempPath, 0, Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar);
-
-            // Set recovery option.
+            
             Esent.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, JET_param.Recovery, 0, recoveryEnabled ? "On" : "Off");
 
             m_jetInstance = new Instance("ESEVIEW");
+            m_jetInstance.Parameters.LogFileDirectory = Path.GetDirectoryName(m_filename);
+            m_jetInstance.Parameters.TempDirectory = Path.GetDirectoryName(m_filename);
+            m_jetInstance.Parameters.SystemDirectory = Path.GetDirectoryName(m_filename);
+            m_jetInstance.Parameters.AlternateDatabaseRecoveryDirectory = Path.GetDirectoryName(m_filename);
+            m_jetInstance.Parameters.CircularLog = true;
+            m_jetInstance.Parameters.CleanupMismatchedLogFiles = true;
             m_jetInstance.Init();
 
             m_sesid = new Session(m_jetInstance);
@@ -77,7 +76,6 @@ namespace EseView
                 }
                 m_sesid.End();
             }
-
             if ((m_jetInstance != null) && !m_jetInstance.Equals(JET_INSTANCE.Nil))
             {
                 m_jetInstance.Close();
